@@ -87,8 +87,11 @@ func allocateAndReturn(data string) uint64 {
 	ptr := allocate(size)
 
 	// Copy data to WASM memory
-	dest := (*[1024]byte)(unsafe.Pointer(uintptr(ptr)))
-	copy(dest[:size], dataBytes)
+	// Use a slice view sized to the response to avoid overflow
+	if size > 0 {
+		dest := unsafe.Slice((*byte)(unsafe.Pointer(uintptr(ptr))), size)
+		copy(dest, dataBytes)
+	}
 
 	// Return combined pointer and size
 	return uint64(ptr)<<32 | uint64(size)
